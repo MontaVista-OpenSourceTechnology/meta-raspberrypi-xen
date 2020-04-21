@@ -22,8 +22,31 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=250cdeda9811e1f554094a6f1dd179fc"
 # For pod2man
 DEPENDS = "perl-native"
 
-RDEPENDS_${PN} = "xen-tools perl"
+RDEPENDS_${PN} = "xen-tools perl \
+	debootstrap \
+	perl-module-english \
+	perl-module-tie-hash-namedcapture \
+	perl-module-digest-md5 \
+	perl-module-env \
+	perl-module-file-temp \
+	perl-module-pod-text \
+	libfile-slurp-perl \
+	libdata-validate-uri-perl \
+	libdata-validate-ip-perl \
+	libdata-validate-domain-perl \
+	libtext-template-perl \
+	libconfig-inifiles-perl \
+	libfile-which-perl \
+	libterm-ui-perl \
+	perl-module-deprecate \
+	perl-module-params-check \
+	libterm-readline-perl \
+	libsort-versions-perl \
+	"
 RDEPENDS_${PN}-misc = "xen-tools perl"
+
+inherit perl-version
+inherit cpan-base
 
 do_compile() {
 	oe_runmake manpages || die "make failed"
@@ -31,13 +54,16 @@ do_compile() {
 
 do_install() {
 	oe_runmake install DESTDIR="${D}"
+	mkdir -p ${D}/${PERLLIBDIRS}/${@get_perl_version(d)}
+	mv ${D}/usr/share/perl5/Xen ${D}/${PERLLIBDIRS}/${@get_perl_version(d)}
+	rmdir ${D}/usr/share/perl5
 }
 
 PACKAGES += "${PN}-misc"
 
 FILES_${PN} += " \
 	${datadir}/bash-completion/completions/xen-tools \
-	${datadir}/perl5/Xen/Tools/Common.pm \
+	${PERLLIBDIRS}/${@get_perl_version(d)}/Xen \
 	"
 
 FILES_${PN}-misc = "${datadir}/xen-tools"
