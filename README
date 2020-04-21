@@ -1,0 +1,73 @@
+This README file contains information on the contents of the
+meta-raspberry-pi-xen layer.
+
+Please see the corresponding sections below for details.
+
+Dependencies
+============
+
+  URI: git://git.yoctoproject.org/poky
+  branch: dunfell
+ 
+  URI: git://git.yoctoproject.org/meta-virtualization
+  branch: dunfell
+
+  URI: git://git.yoctoproject.org/meta-raspberrypi
+  branch: dunfell
+
+Patches
+=======
+
+Please submit any patches against the meta-raspberry-pi-xen layer to
+the maintainer:
+
+Maintainer: Corey Minyard <cminyard@mvista.com>
+
+Table of Contents
+=================
+
+  I. Adding the meta-raspberry-pi-xen layer to your build
+ II. Misc
+
+
+I. Adding the meta-raspberry-pi-xen layer to your build
+=================================================
+
+Run 'bitbake-layers add-layer meta-raspberry-pi-xen'
+
+The easiest way to use this layer is to use the MontaVista OpenCGX
+releases.  Go to
+https://github.com/MontaVista-OpenSourceTechnology/opencgx-rasberrypi
+and follow the instructions for installation.
+
+Then get this layer via git and add it to bblayers.  (FIXME - more details
+on how to do this.)
+
+Add the following to your local.conf:
+
+  MACHINE = "raspberrypi4-64-xen"
+  IMAGE_FSTYPES = "tar.xz ext3 rpi-sdimg"
+
+plus whatever else you need and build away:
+
+  bitbake <imagename>
+
+Where <imagename> is the image you want to build, like core-image or whatever.
+Then put in your microsd card, unmount any directories that get mounted from
+it, and do the following command:
+
+  sudo dd if=tmp/deploy/images/raspberrypi4-64-xen/<imagename>-raspberrypi4-64-xen.rpi-sdimg of=/dev/mmcblk0 bs=1M
+
+Put it in your Pi and boot on the serial console.
+
+II. Misc
+========
+
+Due to issues with some Raspberry Pi devices not supporting DMA above 1GB and
+Xen not understanding this, the memory is limited to 1GB.
+
+Note that only the serial console is currently supported.  So you must have a
+compatible serial interface.  I use the TTL-232R-RPi (you can search on Mouser,
+DigiKey, or whatever for it).  Be careful with getting the pins right, make
+sure to look for the square pad (pin 1) for reference.  Sometime vendors are
+showing the bottom of the board.
