@@ -33,15 +33,16 @@ Table of Contents
 I. Adding the meta-raspberry-pi-xen layer to your build
 =================================================
 
-Run 'bitbake-layers add-layer meta-raspberry-pi-xen'
-
 The easiest way to use this layer is to use the MontaVista OpenCGX
 releases.  Go to
 https://github.com/MontaVista-OpenSourceTechnology/opencgx-rasberrypi
 and follow the instructions for installation.
 
-Then get this layer via git and add it to bblayers.  (FIXME - more details
-on how to do this.)
+Then get this layer via git and add it to bblayers
+
+  git clone https://github.com/MontaVista-OpenSourceTechnology/meta-raspberrypi-xen.git ../layers/meta-raspberrypi-xen
+  (cd $TOPDIR/layers/meta-raspberrypi-xen; git checkout dunfell)
+  bitbake-layers add-layer $TOPDIR/layers/meta-raspberrypi-xen`
 
 Add the following to your local.conf:
 
@@ -52,9 +53,9 @@ plus whatever else you need and build away:
 
   bitbake <imagename>
 
-Where <imagename> is the image you want to build, like core-image or whatever.
-Then put in your microsd card, unmount any directories that get mounted from
-it, and do the following command:
+Where <imagename> is the image you want to build, like core-image-minimal or
+whatever.  Then put in your microsd card, unmount any directories that get
+mounted from it, and do the following command:
 
   sudo dd if=tmp/deploy/images/raspberrypi4-64-xen/<imagename>-raspberrypi4-64-xen.rpi-sdimg of=/dev/mmcblk0 bs=1M
 
