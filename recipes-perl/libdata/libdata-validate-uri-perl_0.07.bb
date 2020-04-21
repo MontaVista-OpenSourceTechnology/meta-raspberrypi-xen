@@ -11,7 +11,7 @@ S = "${WORKDIR}/Data-Validate-URI-${PV}"
 
 inherit cpan
 
-RDEPENDS_{$PN} += "perl-module-autoloader libnet-domain-tld-perl"
+RDEPENDS_${PN} += "perl-module-autoloader libnet-domain-tld-perl"
 
 SRC_URI[md5sum] = "7798746c9bac48b9384d4e631bcaf16b"
 SRC_URI[sha256sum] = "f06418d2a4603913d1b6ce52b167dd13e787e13bf2be325a065df7d408f79c60"
