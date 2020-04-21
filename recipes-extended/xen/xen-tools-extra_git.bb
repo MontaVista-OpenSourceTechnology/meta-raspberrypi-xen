@@ -54,8 +54,8 @@ do_compile() {
 
 do_install() {
 	oe_runmake install DESTDIR="${D}"
-	mkdir -p ${D}/${PERLLIBDIRS}/${@get_perl_version(d)}
-	mv ${D}/usr/share/perl5/Xen ${D}/${PERLLIBDIRS}/${@get_perl_version(d)}
+	mkdir -p ${D}/${libdir}/perl5/${@get_perl_version(d)}
+	mv ${D}/usr/share/perl5/Xen ${D}/${libdir}/perl5/${@get_perl_version(d)}
 	rmdir ${D}/usr/share/perl5
 }
 
@@ -63,7 +63,7 @@ PACKAGES += "${PN}-misc"
 
 FILES_${PN} += " \
 	${datadir}/bash-completion/completions/xen-tools \
-	${PERLLIBDIRS}/${@get_perl_version(d)}/Xen \
+	${libdir}/perl5/${@get_perl_version(d)}/Xen \
 	"
 
 FILES_${PN}-misc = "${datadir}/xen-tools"
