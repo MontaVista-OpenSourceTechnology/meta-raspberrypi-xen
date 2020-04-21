@@ -72,3 +72,8 @@ compatible serial interface.  I use the TTL-232R-RPi (you can search on Mouser,
 DigiKey, or whatever for it).  Be careful with getting the pins right, make
 sure to look for the square pad (pin 1) for reference.  Sometime vendors are
 showing the bottom of the board.
+
+The standard MontaVista tools will not automatically update this particular
+repository added this way.  If you need to update, you will need to cd to
+$TOPDIR/layers/meta-raspberrypi-xen and do a "git pull".  This will be better
+integrated in the future.
