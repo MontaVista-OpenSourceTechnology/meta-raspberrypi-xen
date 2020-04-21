@@ -11,7 +11,7 @@ ENABLE_UART = "1"
 
 # Make sure the Xen tools and xen are on the dom0 target
 IMAGE_INSTALL_append = " \
-    xen xen-tools \
+    xen xen-tools xen-tools-extra \
     ${@bb.utils.contains('MACHINE_FEATURES', 'acpi', 'kernel-module-xen-acpi-processor', '', d)} \
     kernel-module-xen-blkback \
     kernel-module-xen-blkfront \
