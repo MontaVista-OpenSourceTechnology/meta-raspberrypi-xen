@@ -51,17 +51,17 @@ RDEPENDS_${PN} = "xen-tools perl \
 inherit perl-version
 inherit cpan-base
 
-# Due to a race, /etc/xen-tools/roles.d can get created (with a silent failure)
-# after the files are copied into it.  So force the install to be serial.
-PARALLEL_MAKEINSTALL = ""
-
 do_compile() {
 	oe_runmake manpages || die "make failed"
 }
 
 do_install() {
+	# There is an issue with the makefile not creating role.d until
+	# after the files are copied there, create the directory first to
+	# avoid this.
+	install -d ${D}/etc/xen-tools/role.d
 	oe_runmake install DESTDIR="${D}"
-	mkdir -p ${D}/${libdir}/perl5/${@get_perl_version(d)}
+	install -d ${D}/${libdir}/perl5/${@get_perl_version(d)}
 	mv ${D}/usr/share/perl5/Xen ${D}/${libdir}/perl5/${@get_perl_version(d)}
 	rmdir ${D}/usr/share/perl5
 }
