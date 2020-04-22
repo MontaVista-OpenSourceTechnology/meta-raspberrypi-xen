@@ -22,6 +22,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=250cdeda9811e1f554094a6f1dd179fc"
 # For pod2man
 DEPENDS = "perl-native"
 
+# We have openssh in here because the xen-tools-extra programs require it
+# And dropbear will not work.
 RDEPENDS_${PN} = "xen-tools perl \
 	debootstrap \
 	perl-module-english \
@@ -42,6 +44,8 @@ RDEPENDS_${PN} = "xen-tools perl \
 	perl-module-params-check \
 	libterm-readline-perl \
 	libsort-versions-perl \
+	openssh \
+	e2fsprogs \
 	"
 
 inherit perl-version
