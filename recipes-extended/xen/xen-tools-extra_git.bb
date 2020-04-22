@@ -43,10 +43,13 @@ RDEPENDS_${PN} = "xen-tools perl \
 	libterm-readline-perl \
 	libsort-versions-perl \
 	"
-RDEPENDS_${PN}-misc = "xen-tools perl"
 
 inherit perl-version
 inherit cpan-base
+
+# Due to a race, /etc/xen-tools/roles.d can get created (with a silent failure)
+# after the files are copied into it.  So force the install to be serial.
+PARALLEL_MAKEINSTALL = ""
 
 do_compile() {
 	oe_runmake manpages || die "make failed"
@@ -59,11 +62,8 @@ do_install() {
 	rmdir ${D}/usr/share/perl5
 }
 
-PACKAGES += "${PN}-misc"
-
 FILES_${PN} += " \
 	${datadir}/bash-completion/completions/xen-tools \
 	${libdir}/perl5/${@get_perl_version(d)}/Xen \
+	${datadir}/xen-tools \
 	"
-
-FILES_${PN}-misc = "${datadir}/xen-tools"
