@@ -171,15 +171,30 @@ Now edit conf/local.conf in your new project and add:
   MACHINE = "qemuarm64"
   IMAGE_FSTYPES = "tar.xz"
   IMAGE_INSTALL_append = " openssh"
+  # Enable Xen support in the kernel
+  KERNEL_CONFIG_XEN = "y"
+  KERNEL_CONFIG_PARAVIRT = "y"
+  KERNEL_CONFIG_HVC_DRIVER = "y"
+  KERNEL_CONFIG_HVC_XEN = "y"
+  KERNEL_CONFIG_XEN_FBDEV_FRONTEND = "y"
+  KERNEL_CONFIG_XEN_BLKDEV_FRONTEND = "y"
+  KERNEL_CONFIG_XEN_NETDEV_FRONTEND = "y"
+  KERNEL_CONFIG_XEN_PCIDEV_FRONTEND = "y"
+  KERNEL_CONFIG_INPUT_XEN_KBDDEV_FRONTEND = "y"
+  KERNEL_CONFIG_XEN_FBDEV_FRONTEND = "y"
+  KERNEL_CONFIG_XEN_XENBUS_FRONTEND = "y"
+  KERNEL_CONFIG_XEN_SAVE_RESTORE = "y"
+  KERNEL_CONFIG_XEN_GRANT_DEV_ALLOC = "y"
 
-then save and run:
+The kernel configs will probably be added as a machine at some point,
+but it's required for now.  Now save and run:
 
   bitbake core-image-minimal
 
 Now copy the filesystem and kernel for the domU instances onto the
 target system dom0 using ssh.  These files will be
   tmp/deploy/images/qemuarm64/core-image-minimal-qemuarm64.tar.xz
-  tmp/deploy/images/qemuarm64/Image-qemuarm64
+  tmp/deploy/images/qemuarm64/Image-qemuarm64.bin
 
 I'm putting these files in /xen on the target dom0
 
@@ -201,7 +216,7 @@ to do this.
 
 * Uncomment "dhcp = 1"
 
-* Change kernel to /xen/Image-qemuarm64 and comment out
+* Change kernel to /xen/Image-qemuarm64.bin and comment out
   initrd.
 
 * You might want to adjust the size, memory, etc options.  Check the
