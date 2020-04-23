@@ -6,4 +6,10 @@ SRC_URI_rpixen = " \
     git://xenbits.xen.org/xen.git;branch=${XEN_BRANCH} \
     "
 
+# qemu is required, of course.
+RDEPENDS_${PN} += "qemu"
+
+# We need the real ifupdown, not the busybox version.
+RDEPENDS_${PN} += "ifupdown"
+
 LIC_FILES_CHKSUM_rpixen = "file://COPYING;md5=4295d895d4b5ce9d070263d52f030e49"
