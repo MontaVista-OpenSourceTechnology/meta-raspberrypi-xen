@@ -1,10 +1,12 @@
 
+RPI_DOM0_MEM ??= "256M"
+
 do_compile_rpixen() {
     # Create the boot script for u-boot.  For my machine the chosen
     # entry "fdt print /chosen" looks like the following after this:
     #
     # chosen {
-    #	xen,xen-bootargs = "console=dtuart dtuart=/soc/serial@7e215040 sync_console dom0_mem=512M dom0_mem=512M bootscrub=0";
+    #	xen,xen-bootargs = "console=dtuart dtuart=/soc/serial@7e215040 sync_console dom0_mem=256M bootscrub=0";
     #	ranges;
     #	#size-cells = <0x00000001>;
     #	#address-cells = <0x00000001>;
@@ -36,7 +38,7 @@ do_compile_rpixen() {
     echo 'fdt resize 0x1000' >>"${WORKDIR}/boot.cmd"
 
     # Add boot arguments for Xen
-    echo 'fdt set /chosen xen,xen-bootargs "console=dtuart dtuart=/soc/serial@7e215040 sync_console dom0_mem=512M dom0_mem=512M bootscrub=0"' >>"${WORKDIR}/boot.cmd"
+    echo 'fdt set /chosen xen,xen-bootargs "console=dtuart dtuart=/soc/serial@7e215040 sync_console dom0_mem='${RPI_DOM0_MEM}' bootscrub=0"' >>"${WORKDIR}/boot.cmd"
 
     # Add a dom0 node to chosen to put Linux boot information in.
     echo 'fdt mknode /chosen dom0' >>"${WORKDIR}/boot.cmd"
