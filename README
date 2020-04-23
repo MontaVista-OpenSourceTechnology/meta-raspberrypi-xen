@@ -31,7 +31,7 @@ Table of Contents
 
 
 I. Adding the meta-raspberry-pi-xen layer to your build
-=================================================
+=======================================================
 
 The easiest way to use this layer is to use the MontaVista OpenCGX
 releases.  Go to
@@ -49,6 +49,10 @@ Add the following to your local.conf:
   MACHINE = "raspberrypi4-64-xen"
   IMAGE_FSTYPES = "tar.xz ext3 rpi-sdimg"
 
+If you are using lvm (like will be shown below) add:
+
+IMAGE_INSTALL_append = " lvm2 kernel-module-linear kernel-module-dm-mod"
+
 plus whatever else you need and build away:
 
   bitbake <imagename>
@@ -59,7 +63,7 @@ mounted from it, and do the following command:
 
   sudo dd if=tmp/deploy/images/raspberrypi4-64-xen/<imagename>-raspberrypi4-64-xen.rpi-sdimg of=/dev/mmcblk0 bs=1M
 
-If you want, you can resize the root filesystem to take the entire mmc
+If you want, you can resize the root filesystem to take some or all mmc
 device.  To do that, use fdisk to make the second partition bigger, and
 use resize2fs to resize the filesystem.  Somethingg like:
 
@@ -92,9 +96,9 @@ use resize2fs to resize the filesystem.  Somethingg like:
   Select (default p): p
   Partition number (2-4, default 2): 
   First sector (2048-122757119, default 2048): 90112
-  Last sector, +sectors or +size{K,M,G,T,P} (90112-122757119, default 122757119): 
+  Last sector, +sectors or +size{K,M,G,T,P} (90112-122757119, default 122757119): +10G
 
-  Created a new partition 2 of type 'Linux' and of size 58.5 GiB.
+  Created a new partition 2 of type 'Linux' and of size 10 GiB.
   Partition #2 contains a ext3 signature.
 
   Do you want to remove the signature? [Y]es/[N]o: n
@@ -112,13 +116,140 @@ use resize2fs to resize the filesystem.  Somethingg like:
 
   $ sync
 
+Note that I created a 10GB partition and left the rest of the space
+for the domU targets.  What you need to do on the size may vary
+depending on how you configure the disk space for domU.  The
+instructions below will show how to do lvm.
+
 Then remove the mmc, put it in your Pi and boot on the serial console.
+If you include e2fsprogs-resize2fs in your image, you can do the above
+process on the target itself.
+
+Add a bridge name xenbr0.  First do:
+
+  ifdown eth0
+
+Then edit /etc/network/interfaces, comment out anything to do with
+eth0, then add:
+
+  auto xenbr0
+  iface xenbr0 inet dhcp
+          pre-up bridge-ifupdown eth0
+          post-down bridge-ifupdown eth0
+
+Then you can do:
+
+  ifup xenbr0
+
+and you will have a working bridge.  Note that obviously, you should
+do this on a serial console.  Note that this is different than the
+(more or less) standard way of doing it, with bridge_ports set, but
+it's easier to use and bridge_ports is not enabled on yocto.
+
+For lvm, use fdisk to add a 3rd partition with the rest of the space
+on the mmc device and run:
+
+  # pvcreate /dev/mmcblk0p3
+    Failed to clear hint file.
+    Physical volume "/dev/mmcblk0p3" successfully created.
+  # vgcreate vg01 /dev/mmcblk0p3
+    Failed to clear hint file.
+    Volume group "vg01" successfully created
+
+Build a domU
+============
+
+The Raspberry Pi kernel cannot be used for booting on Xen, and the
+dom0 filesystem has lots of useless stuff.  So instead, let's build
+another image.  Open another window and cd to just below your current
+projects directory.  Then do:
+
+  source setup.sh project-domU
+
+Now edit conf/local.conf in your new project and add:
+
+  MACHINE = "qemuarm64"
+  IMAGE_FSTYPES = "tar.xz"
+  IMAGE_INSTALL_append = " openssh"
+
+then save and run:
+
+  bitbake core-image-minimal
+
+Now copy the filesystem and kernel for the domU instances onto the
+target system dom0 using ssh.  These files will be
+  tmp/deploy/images/qemuarm64/core-image-minimal-qemuarm64.tar.xz
+  tmp/deploy/images/qemuarm64/Image-qemuarm64
+
+I'm putting these files in /xen on the target dom0
+
+Configure domU on the target
+============================
+
+Now we are set to configure xen-tools.  Edit /etc/xen-tools/xen-tools.conf
+to do this.
+
+* Uncomment the line that says "lvm = vg0" and change vg0 to vg01
+
+* Change install-method to be tar
+
+* Set install-source to /xen/core-image-minimal-qemuarm64.tar.xz
+
+* set tar-cmd to /bin/tar -xJf $src
+
+* set dist to yocto-3.1
+
+* Uncomment "dhcp = 1"
+
+* Change kernel to /xen/Image-qemuarm64 and comment out
+  initrd.
+
+* You might want to adjust the size, memory, etc options.  Check the
+  other options, you may want to change other things.  The file has
+  fairly clear documentation.
+
+Now run xen-create-image --hostname=<name>
+
+where <name> is something like dom1.home.net, or whatever.  This will
+create an lvm image based on your configuration and create
+/etc/xen/dom1.home.net.  It will also print out something like:
+
+Installation Summary
+---------------------
+Hostname        :  dom1.minyard.net
+Distribution    :  yocto-3.1
+MAC Address     :  00:16:3E:B5:22:13
+IP Address(es)  :  dynamic
+Root Password   :  JGyu8sFkHSsyQvaarNq8kRY
+
+That root password is pretty important, save it for now.
+
+You can then run:
+
+  xl create -c /etc/xen/dom1.home.net
+
+and the new kernel should start up in a Xen domain.  You can log in
+with the given password, and then you are set.  Networking should come
+up normally, so you can ssh into the system, too, dhcp will print the
+IP address on the console.
+
+To leave the console, type ^].  The domain is still running, you can
+reconnect with
+
+  xl console dom1.home.net
+
+Powering off in the subdomain will shut down the domain.  If you need
+to destroy it because you can't do that, you can do:
+
+  xl destroy dom1.home.net
 
 II. Misc
 ========
 
 Due to issues with some Raspberry Pi devices not supporting DMA above 1GB and
 Xen not understanding this, the memory is limited to 1GB.
+
+Note that you cannot use the Raspberry Pi kernel image in DomU.
 
 Note that only the serial console is currently supported.  So you must have a
 compatible serial interface.  I use the TTL-232R-RPi (you can search on Mouser,
