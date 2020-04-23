@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# This script renames things to use hvc0 for the serial console.
+#
+
+prefix=$1
+inittab=${prefix}/etc/inittab
+
+if [ -f ${inittab} ]; then
+	# Delete the standard serial port init line.  start_getty doesn't
+	# work in Xen domains.
+	sed -i -e '/.*start_getty.*/d' ${inittab}
+
+	# Set the normal init to use hvc0
+	sed -i -e 's/38400 tty1/115200 hvc0/' ${inittab}
+fi

@@ -13,6 +13,7 @@ XEN_TOOLS_BRANCH = "master"
 
 SRC_URI = " \
     git://github.com/xen-tools/xen-tools.git;branch=${XEN_TOOLS_BRANCH} \
+    file://30-fix-inittab \
     "
 S = "${WORKDIR}/git"
 
@@ -64,6 +65,11 @@ do_install() {
 	install -d ${D}/${libdir}/perl5/${@get_perl_version(d)}
 	mv ${D}/usr/share/perl5/Xen ${D}/${libdir}/perl5/${@get_perl_version(d)}
 	rmdir ${D}/usr/share/perl5
+
+	# Create the yocto-specific install scripts
+	install -d ${D}/usr/share/xen-tools/yocto.d
+	ln -sf yocto.d ${D}/usr/share/xen-tools/yocto-3.1.d
+	install -m 755 ${WORKDIR}/30-fix-inittab ${D}/usr/share/xen-tools/yocto.d
 }
 
 FILES_${PN} += " \
