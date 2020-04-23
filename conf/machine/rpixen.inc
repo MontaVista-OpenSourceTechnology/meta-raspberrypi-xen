@@ -14,3 +14,6 @@ MACHINE_ESSENTIAL_EXTRA_RRECOMMENDS = "packagegroup-xen-dom0"
 
 # We use this to only do certain things when we are using a Xen machine.
 MACHINEOVERRIDES .= ":rpixen"
+
+# Make sure xen mode is enabled in qemu
+PACKAGECONFIG_append_pn-qemu = " xen"
