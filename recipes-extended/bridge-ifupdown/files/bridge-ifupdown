@@ -1,0 +1,107 @@
+#!/bin/sh
+
+#    bridge-ifupdown - A shell script for helping with bridges in
+#    /etc/network/interfaces
+#    Copyright (C) 2020  Corey Minyard
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#      Boston, MA  02110-1301  USA
+
+case $1 in
+    -h | -? | --help)
+	cat <<EOF
+$1 - A program to help with bridge ifup/down in /etc/network/interfaces
+
+To use this to create a bridge, format you entry in /etc/network/interfaces
+like:
+
+iface br0 inet dhcp                         
+        pre-up bridge-ifupdown eth0            
+        post-down bridge-ifupdown eth0  
+
+to create br0, add eth0 to br0, and run dhcp on it.  This script will
+create/destroy the bridge as necessary.  It expects IFACE and MODE to
+be set per interfaces(5).
+EOF
+esac
+
+if [ "${IFACE}" = "--all" ]; then
+	exit 0
+fi
+
+bring_up_bridge() {
+	ifconfig "${IFACE}" down
+	brctl delbr "${IFACE}"
+
+	if ! brctl addbr "${IFACE}"; then
+		exit 1
+	fi
+
+	err=false
+
+	if ! $err && ! brctl stp "${IFACE}" off; then
+		err=true
+	fi
+
+	if ! $err && ! brctl setfd "${IFACE}" 0; then
+		err=true
+	fi
+
+	for i in $*; do
+		if $err; then
+			break;
+		fi
+		if ! $err && ! brctl addif "${IFACE}" $i; then
+			err=true
+			break
+		fi
+	done
+
+	up=""
+	for i in $*; do
+		if $err; then
+			break;
+		fi
+		if ! $err && ! ifconfig $i up; then
+			err=true
+			break
+		fi
+
+		up="$added $i"
+	done
+
+	if $err; then
+		for i in $up; do
+			ifconfig $i down
+		done
+		brctl delbr "$IFACE"
+		exit 1
+	fi
+}
+
+
+bring_down_bridge() {
+	ifconfig "${IFACE}" down
+	for i in $*; do
+		ifconfig $i down
+	done
+	brctl delbr "${IFACE}"
+}
+
+case "${MODE}" in
+	start) bring_up_bridge $* ;;
+	stop) bring_down_bridge $* ;;
+	*) true ;;
+esac

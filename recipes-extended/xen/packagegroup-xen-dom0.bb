@@ -22,6 +22,7 @@ RDEPENDS_${PN} = " \
     kernel-module-xen-privcmd \
     kernel-module-xen-scsifront \
     kernel-module-xen-wdt \
+    bridge-ifupdown \
 "
 
 RRECOMMENDS_${PN} = ""
