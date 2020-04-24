@@ -125,7 +125,7 @@ Then remove the mmc, put it in your Pi and boot on the serial console.
 If you include e2fsprogs-resize2fs in your image, you can do the above
 process on the target itself.
 
-Add a bridge name xenbr0.  First do:
+Add a bridge named xenbr0.  First do:
 
   ifdown eth0
 
@@ -141,10 +141,10 @@ Then you can do:
 
   ifup xenbr0
 
-and you will have a working bridge.  Note that obviously, you should
-do this on a serial console.  Note that this is different than the
-(more or less) standard way of doing it, with bridge_ports set, but
-it's easier to use and bridge_ports is not enabled on yocto.
+and you will have a working bridge.  Obviously, you should do this on
+a serial console.  Note that this is different than the (more or less)
+standard way of doing it, with bridge_ports, but it's easier to use
+and bridge_ports is not enabled on yocto.
 
 For lvm, use fdisk to add a 3rd partition with the rest of the space
 on the mmc device and run:
@@ -160,9 +160,9 @@ Build a domU
 ============
 
 The Raspberry Pi kernel cannot be used for booting on Xen, and the
-dom0 filesystem has lots of useless stuff.  So instead, let's build
-another image.  Open another window and cd to just below your current
-projects directory.  Then do:
+dom0 filesystem has lots of packages that are useless outside of dom0.
+So instead, let's build another image.  Open another window and cd to
+just below your current projects directory.  Then do:
 
   source setup.sh project-domU
 
@@ -182,7 +182,7 @@ target system dom0 using ssh.  These files will be:
   tmp/deploy/images/qemuarm64/core-image-minimal-qemuarm64.tar.xz
   tmp/deploy/images/qemuarm64/Image-qemuarm64.bin
 
-I'm putting these files in /xen on the target dom0
+I'm putting these files in /xen on the target dom0.
 
 Configure domU on the target
 ============================
@@ -231,8 +231,8 @@ You can then run:
 
 and the new kernel should start up in a Xen domain.  You can log in
 with the given password, and then you are set.  Networking should come
-up normally, so you can ssh into the system, too, dhcp will print the
-IP address on the console.
+up normally, so you can ssh into the domain (if you get the IP
+address).
 
 To leave the console, type ^].  The domain is still running, you can
 reconnect with
@@ -269,4 +269,5 @@ The dom0 kernel gets 256M by default.  You can change this with
 
 in your local.conf
 
-Reboot doesn't seem to work.
+Reboot doesn't seem to work.  It doesn't appear to be implemented in
+Xen for the Pi.
