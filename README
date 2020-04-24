@@ -159,10 +159,10 @@ on the mmc device and run:
 Build a domU
 ============
 
-The Raspberry Pi kernel cannot be used for booting on Xen, and the
-dom0 filesystem has lots of packages that are useless outside of dom0.
-So instead, let's build another image.  Open another window and cd to
-just below your current projects directory.  Then do:
+The Raspberry Pi kernel cannot be used for booting on a Xen domU, and
+the dom0 filesystem has lots of packages that are useless outside of
+dom0.  So instead, let's build another image.  Open another window and
+cd to just below your current projects directory.  Then do:
 
   source setup.sh project-domU
 
