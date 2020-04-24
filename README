@@ -264,6 +264,9 @@ $TOPDIR/layers/meta-raspberrypi-xen and do a "git pull".  This will be better
 integrated in the future.
 
 The dom0 kernel gets 256M by default.  You can change this with
-  RPI_DOM0_MEM=xxxM
+
+  RPI_DOM0_MEM = "xxxM"
+
+in your local.conf
 
 Reboot doesn't seem to work.
