@@ -247,16 +247,13 @@ to destroy it because you can't do that, you can do:
 II. Misc
 ========
 
-Due to issues with some Raspberry Pi devices not supporting DMA above 1GB and
-Xen not understanding this, the memory is limited to 1GB.
+You cannot use the Raspberry Pi kernel image in DomU.
 
-Note that you cannot use the Raspberry Pi kernel image in DomU.
-
-Note that only the serial console is currently supported.  So you must have a
-compatible serial interface.  I use the TTL-232R-RPi (you can search on Mouser,
-DigiKey, or whatever for it).  Be careful with getting the pins right, make
-sure to look for the square pad (pin 1) for reference.  Sometime vendors are
-showing the bottom of the board.
+Only the serial console is currently supported.  So you must have a compatible
+serial interface.  I use the TTL-232R-RPi (you can search on Mouser, DigiKey,
+or whatever for it).  Be careful with getting the pins right, make sure to look
+for the square pad (pin 1) for reference.  Sometime vendors are showing the
+bottom of the board.
 
 The standard MontaVista tools will not automatically update this particular
 repository added this way.  If you need to update, you will need to cd to

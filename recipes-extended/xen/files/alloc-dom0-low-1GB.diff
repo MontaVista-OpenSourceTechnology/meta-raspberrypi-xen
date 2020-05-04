@@ -1,0 +1,26 @@
+Allocate as much memory as possible in the low 1GB for dom0.
+
+From: Julien Grall <julien@xen.org>
+
+diff --git a/xen/arch/arm/domain_build.c b/xen/arch/arm/domain_build.c
+index dd9c3b73ba..a0bd012fc5 100644
+--- a/xen/arch/arm/domain_build.c
++++ b/xen/arch/arm/domain_build.c
+@@ -281,7 +281,7 @@ static void __init allocate_memory_11(struct domain *d,
+      */
+     while ( order >= min_low_order )
+     {
+-        for ( bits = order ; bits <= (lowmem ? 32 : PADDR_BITS); bits++ )
++        for ( bits = order ; bits <= (lowmem ? 30 : PADDR_BITS); bits++ )
+         {
+             pg = alloc_domheap_pages(d, order, MEMF_bits(bits));
+             if ( pg != NULL )
+@@ -312,7 +312,7 @@ static void __init allocate_memory_11(struct domain *d,
+     order = get_allocation_size(kinfo->unassigned_mem);
+     while ( kinfo->unassigned_mem && kinfo->mem.nr_banks < NR_MEM_BANKS )
+     {
+-        pg = alloc_domheap_pages(d, order, lowmem ? MEMF_bits(32) : 0);
++        pg = alloc_domheap_pages(d, order, lowmem ? MEMF_bits(30) : 0);
+         if ( !pg )
+         {
+             order --;
