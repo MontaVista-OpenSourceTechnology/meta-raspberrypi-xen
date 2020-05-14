@@ -16,8 +16,11 @@ inherit cpan
 RDEPENDS_${PN} += "perl-module-socket"
 
 do_configure_append() {
+    # Generate config.h file
     cd Lite/Util
-    perl Makefile.PL
+    echo "***Configuring in `pwd`***"
+    sh ./configure.gcc --build=${BUILD_SYS} --host=${HOST_SYS} --target=${TARGET_SYS}
+    cpan_do_configure
     cd ../..
 }
 
