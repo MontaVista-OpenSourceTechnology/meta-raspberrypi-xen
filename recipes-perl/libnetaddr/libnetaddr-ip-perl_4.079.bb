@@ -15,7 +15,7 @@ inherit cpan
 
 RDEPENDS_${PN} += "perl-module-socket"
 
-do_configure_append() {
+do_configure_prepend() {
     # Generate config.h file
     cd Lite/Util
     echo "***Configuring in `pwd`***"
