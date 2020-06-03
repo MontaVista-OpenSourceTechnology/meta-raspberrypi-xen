@@ -1,0 +1,107 @@
+From 99e204ee0722fcd7408609b1edf8e3554df7ef25 Mon Sep 17 00:00:00 2001
+From: Julien Grall <jgrall@amazon.com>
+Date: Mon, 18 May 2020 12:30:07 +0100
+Subject: [PATCH 2/3] xen/arm: Take into account the DMA width when allocating
+ Dom0 memory banks
+
+At the moment, Xen is assuming that all the devices are at least 32-bit
+DMA capable. However, some SoCs have devices that may be able to access
+a much restricted range. For instance, the Raspberry PI 4 has devices
+that can only access the first GB of RAM.
+
+The function arch_get_dma_bit_size() will return the lowest DMA width on
+the platform. Use it to decide what is the limit for the low memory.
+
+Signed-off-by: Julien GralL <jgrall@amazon.com>
+Message-Id: <20200518113008.15422-3-julien@xen.org>
+---
+ xen/arch/arm/domain_build.c | 32 +++++++++++++++++++-------------
+ 1 file changed, 19 insertions(+), 13 deletions(-)
+
+diff --git a/xen/arch/arm/domain_build.c b/xen/arch/arm/domain_build.c
+index dd9c3b73ba..6bbd84115e 100644
+--- a/xen/arch/arm/domain_build.c
++++ b/xen/arch/arm/domain_build.c
+@@ -210,10 +210,13 @@ fail:
+  *    the ramdisk and DTB must be placed within a certain proximity of
+  *    the kernel within RAM.
+  * 3. For dom0 we want to place as much of the RAM as we reasonably can
+- *    below 4GB, so that it can be used by non-LPAE enabled kernels (32-bit)
++ *    below 4GB, so that it can be used by non-LPAE enabled kernels (32-bit).
+  *    or when a device assigned to dom0 can only do 32-bit DMA access.
+- * 4. For 32-bit dom0 the kernel must be located below 4GB.
+- * 5. We want to have a few largers banks rather than many smaller ones.
++ * 4. Some devices assigned to dom0 can only do 32-bit DMA access or
++ *    even be more restricted. We want to allocate as much of the RAM
++ *    as we reasonably can that can be accessed from all the devices..
++ * 5. For 32-bit dom0 the kernel must be located below 4GB.
++ * 6. We want to have a few largers banks rather than many smaller ones.
+  *
+  * For the first two requirements we need to make sure that the lowest
+  * bank is sufficiently large.
+@@ -244,9 +247,9 @@ fail:
+  * we give up.
+  *
+  * For 32-bit domain we require that the initial allocation for the
+- * first bank is under 4G. For 64-bit domain, the first bank is preferred
+- * to be allocated under 4G. Then for the subsequent allocations we
+- * initially allocate memory only from below 4GB. Once that runs out
++ * first bank is part of the low mem. For 64-bit, the first bank is preferred
++ * to be allocated in the low mem. Then for subsequent allocation, we
++ * initially allocate memory only from low mem. Once that runs out out
+  * (as described above) we allow higher allocations and continue until
+  * that runs out (or we have allocated sufficient dom0 memory).
+  */
+@@ -261,6 +264,7 @@ static void __init allocate_memory_11(struct domain *d,
+     int i;
+ 
+     bool lowmem = true;
++    unsigned int lowmem_bitsize = min(32U, arch_get_dma_bitsize());
+     unsigned int bits;
+ 
+     /*
+@@ -281,7 +285,7 @@ static void __init allocate_memory_11(struct domain *d,
+      */
+     while ( order >= min_low_order )
+     {
+-        for ( bits = order ; bits <= (lowmem ? 32 : PADDR_BITS); bits++ )
++        for ( bits = order ; bits <= lowmem_bitsize; bits++ )
+         {
+             pg = alloc_domheap_pages(d, order, MEMF_bits(bits));
+             if ( pg != NULL )
+@@ -295,24 +299,26 @@ static void __init allocate_memory_11(struct domain *d,
+         order--;
+     }
+ 
+-    /* Failed to allocate bank0 under 4GB */
++    /* Failed to allocate bank0 in the lowmem region. */
+     if ( is_32bit_domain(d) )
+         panic("Unable to allocate first memory bank\n");
+ 
+-    /* Try to allocate memory from above 4GB */
+-    printk(XENLOG_INFO "No bank has been allocated below 4GB.\n");
++    /* Try to allocate memory from above the lowmem region */
++    printk(XENLOG_INFO "No bank has been allocated below %u-bit.\n",
++           lowmem_bitsize);
+     lowmem = false;
+ 
+  got_bank0:
+ 
+     /*
+-     * If we failed to allocate bank0 under 4GB, continue allocating
+-     * memory from above 4GB and fill in banks.
++     * If we failed to allocate bank0 in the lowmem region,
++     * continue allocating from above the lowmem and fill in banks.
+      */
+     order = get_allocation_size(kinfo->unassigned_mem);
+     while ( kinfo->unassigned_mem && kinfo->mem.nr_banks < NR_MEM_BANKS )
+     {
+-        pg = alloc_domheap_pages(d, order, lowmem ? MEMF_bits(32) : 0);
++        pg = alloc_domheap_pages(d, order,
++                                 lowmem ? MEMF_bits(lowmem_bitsize) : 0);
+         if ( !pg )
+         {
+             order --;
+-- 
+2.17.1
+

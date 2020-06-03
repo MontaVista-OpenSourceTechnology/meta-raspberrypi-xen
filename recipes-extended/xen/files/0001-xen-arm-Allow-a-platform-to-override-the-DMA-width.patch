@@ -1,0 +1,90 @@
+From 0c641d7c2b7810fa8465c67e2e9018ee5277f312 Mon Sep 17 00:00:00 2001
+From: Julien Grall <jgrall@amazon.com>
+Date: Mon, 18 May 2020 12:30:06 +0100
+Subject: [PATCH 1/3] xen/arm: Allow a platform to override the DMA width
+
+At the moment, Xen is assuming that all the devices are at least 32-bit
+DMA capable. However, some SoC have devices that may be able to access
+a much restricted range. For instance, the RPI has devices that can
+only access the first 1GB of RAM.
+
+The structure platform_desc is now extended to allow a platform to
+override the DMA width. The new is used to implement
+arch_get_dma_bit_size().
+
+The prototype is now moved in asm-arm/mm.h as the function is not NUMA
+specific. The implementation is done in platform.c so we don't have to
+include platform.h everywhere. This should be fine as the function is
+not expected to be called in hotpath.
+
+Signed-off-by: Julien Grall <jgrall@amazon.com>
+
+Message-Id: <20200518113008.15422-2-julien@xen.org>
+---
+ xen/arch/arm/platform.c        | 5 +++++
+ xen/include/asm-arm/mm.h       | 2 ++
+ xen/include/asm-arm/numa.h     | 5 -----
+ xen/include/asm-arm/platform.h | 2 ++
+ 4 files changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/xen/arch/arm/platform.c b/xen/arch/arm/platform.c
+index 8eb0b6e57a..4db5bbb4c5 100644
+--- a/xen/arch/arm/platform.c
++++ b/xen/arch/arm/platform.c
+@@ -155,6 +155,11 @@ bool platform_device_is_blacklisted(const struct dt_device_node *node)
+     return (dt_match_node(blacklist, node) != NULL);
+ }
+ 
++unsigned int arch_get_dma_bitsize(void)
++{
++    return ( platform && platform->dma_bitsize ) ? platform->dma_bitsize : 32;
++}
++
+ /*
+  * Local variables:
+  * mode: C
+diff --git a/xen/include/asm-arm/mm.h b/xen/include/asm-arm/mm.h
+index 333efd3a60..a557e100c1 100644
+--- a/xen/include/asm-arm/mm.h
++++ b/xen/include/asm-arm/mm.h
+@@ -363,6 +363,8 @@ int arch_acquire_resource(struct domain *d, unsigned int type, unsigned int id,
+     return -EOPNOTSUPP;
+ }
+ 
++unsigned int arch_get_dma_bitsize(void);
++
+ #endif /*  __ARCH_ARM_MM__ */
+ /*
+  * Local variables:
+diff --git a/xen/include/asm-arm/numa.h b/xen/include/asm-arm/numa.h
+index 490d1f31aa..31a6de4e23 100644
+--- a/xen/include/asm-arm/numa.h
++++ b/xen/include/asm-arm/numa.h
+@@ -25,11 +25,6 @@ extern mfn_t first_valid_mfn;
+ #define node_start_pfn(nid) (mfn_x(first_valid_mfn))
+ #define __node_distance(a, b) (20)
+ 
+-static inline unsigned int arch_get_dma_bitsize(void)
+-{
+-    return 32;
+-}
+-
+ #endif /* __ARCH_ARM_NUMA_H */
+ /*
+  * Local variables:
+diff --git a/xen/include/asm-arm/platform.h b/xen/include/asm-arm/platform.h
+index ed4d30a1be..997eb25216 100644
+--- a/xen/include/asm-arm/platform.h
++++ b/xen/include/asm-arm/platform.h
+@@ -38,6 +38,8 @@ struct platform_desc {
+      * List of devices which must not pass-through to a guest
+      */
+     const struct dt_device_match *blacklist_dev;
++    /* Override the DMA width (32-bit by default). */
++    unsigned int dma_bitsize;
+ };
+ 
+ /*
+-- 
+2.17.1
+

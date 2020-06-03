@@ -1,0 +1,35 @@
+From edd4a82ea86c67b5f7741189315d508238113be6 Mon Sep 17 00:00:00 2001
+From: Julien Grall <jgrall@amazon.com>
+Date: Mon, 18 May 2020 12:30:08 +0100
+Subject: [PATCH 3/3] xen/arm: plat: Allocate as much as possible memory below
+ 1GB for dom0 for RPI
+
+The raspberry PI 4 has devices that can only DMA into the first GB of
+the RAM. Therefore we want allocate as much as possible memory below 1GB
+for dom0.
+
+Use the recently introduced dma_bitsize field to specify the DMA width
+supported.
+
+Signed-off-by: Julien Grall <jgrall@amazon.com>
+Reported-by: Corey Minyard <minyard@acm.org>
+Message-Id: <20200518113008.15422-4-julien@xen.org>
+---
+ xen/arch/arm/platforms/brcm-raspberry-pi.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/xen/arch/arm/platforms/brcm-raspberry-pi.c b/xen/arch/arm/platforms/brcm-raspberry-pi.c
+index b697fa2c6c..ad5483437b 100644
+--- a/xen/arch/arm/platforms/brcm-raspberry-pi.c
++++ b/xen/arch/arm/platforms/brcm-raspberry-pi.c
+@@ -43,6 +43,7 @@ static const struct dt_device_match rpi4_blacklist_dev[] __initconst =
+ PLATFORM_START(rpi4, "Raspberry Pi 4")
+     .compatible     = rpi4_dt_compat,
+     .blacklist_dev  = rpi4_blacklist_dev,
++    .dma_bitsize    = 30,
+ PLATFORM_END
+ 
+ /*
+-- 
+2.17.1
+
