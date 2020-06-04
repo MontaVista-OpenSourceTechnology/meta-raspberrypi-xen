@@ -4,6 +4,7 @@ SRC_URI_append_rpixen = " file://defconfig \
 	file://0001-xen-arm-Allow-a-platform-to-override-the-DMA-width.patch \
 	file://0002-xen-arm-Take-into-account-the-DMA-width-when-allocat.patch \
 	file://0003-xen-arm-plat-Allocate-as-much-as-possible-memory-bel.patch \
+	file://0001-xen-rpi4-implement-watchdog-based-reset.patch \
 "
 
 XEN_REL_rpixen = "4.13"

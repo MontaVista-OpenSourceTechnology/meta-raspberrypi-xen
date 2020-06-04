@@ -1,0 +1,103 @@
+From 868a7db80f84b2c376f299facfb81307a7a0f32b Mon Sep 17 00:00:00 2001
+From: Stefano Stabellini <sstabellini@kernel.org>
+Date: Wed, 3 Jun 2020 15:31:56 -0700
+Subject: [PATCH] xen/rpi4: implement watchdog-based reset
+
+Touching the watchdog is required to be able to reboot the board.
+
+The implementation is based on
+drivers/watchdog/bcm2835_wdt.c:__bcm2835_restart in Linux.
+
+Signed-off-by: Stefano Stabellini <stefano.stabellini@xilinx.com>
+Message-Id: <20200603223156.12767-1-sstabellini@kernel.org>
+---
+ xen/arch/arm/platforms/brcm-raspberry-pi.c | 60 ++++++++++++++++++++++
+ 1 file changed, 60 insertions(+)
+
+diff --git a/xen/arch/arm/platforms/brcm-raspberry-pi.c b/xen/arch/arm/platforms/brcm-raspberry-pi.c
+index f5ae58a7d5..0214ae2b3c 100644
+--- a/xen/arch/arm/platforms/brcm-raspberry-pi.c
++++ b/xen/arch/arm/platforms/brcm-raspberry-pi.c
+@@ -18,6 +18,10 @@
+  */
+ 
+ #include <asm/platform.h>
++#include <xen/delay.h>
++#include <xen/mm.h>
++#include <xen/vmap.h>
++#include <asm/io.h>
+ 
+ static const char *const rpi4_dt_compat[] __initconst =
+ {
+@@ -37,12 +41,68 @@ static const struct dt_device_match rpi4_blacklist_dev[] __initconst =
+      * The aux peripheral also shares a page with the aux UART.
+      */
+     DT_MATCH_COMPATIBLE("brcm,bcm2835-aux"),
++    /* Special device used for rebooting */
++    DT_MATCH_COMPATIBLE("brcm,bcm2835-pm"),
+     { /* sentinel */ },
+ };
+ 
++
++#define PM_PASSWORD         0x5a000000
++#define PM_RSTC             0x1c
++#define PM_WDOG             0x24
++#define PM_RSTC_WRCFG_FULL_RESET    0x00000020
++#define PM_RSTC_WRCFG_CLR           0xffffffcf
++
++static void __iomem *rpi4_map_watchdog(void)
++{
++    void __iomem *base;
++    struct dt_device_node *node;
++    paddr_t start, len;
++    int ret;
++
++    node = dt_find_compatible_node(NULL, NULL, "brcm,bcm2835-pm");
++    if ( !node )
++        return NULL;
++
++    ret = dt_device_get_address(node, 0, &start, &len);
++    if ( ret )
++    {
++        dprintk(XENLOG_ERR, "Cannot read watchdog register address\n");
++        return NULL;
++    }
++
++    base = ioremap_nocache(start & PAGE_MASK, PAGE_SIZE);
++    if ( !base )
++    {
++        dprintk(XENLOG_ERR, "Unable to map watchdog register!\n");
++        return NULL;
++    }
++
++    return base;
++}
++
++static void rpi4_reset(void)
++{
++    u32 val;
++    void __iomem *base = rpi4_map_watchdog();
++    if ( !base )
++        return;
++
++    /* use a timeout of 10 ticks (~150us) */
++    writel(10 | PM_PASSWORD, base + PM_WDOG);
++    val = readl(base + PM_RSTC);
++    val &= PM_RSTC_WRCFG_CLR;
++    val |= PM_PASSWORD | PM_RSTC_WRCFG_FULL_RESET;
++    writel(val, base + PM_RSTC);
++
++    /* No sleeping, possibly atomic. */
++    mdelay(1);
++}
++
+ PLATFORM_START(rpi4, "Raspberry Pi 4")
+     .compatible     = rpi4_dt_compat,
+     .blacklist_dev  = rpi4_blacklist_dev,
++    .reset = rpi4_reset,
+     .dma_bitsize    = 30,
+ PLATFORM_END
+ 
+-- 
+2.17.1
+
