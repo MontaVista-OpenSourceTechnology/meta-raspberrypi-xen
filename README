@@ -63,9 +63,10 @@ mounted from it, and do the following command:
 
   sudo dd if=tmp/deploy/images/raspberrypi4-64-xen/<imagename>-raspberrypi4-64-xen.rpi-sdimg of=/dev/mmcblk0 bs=1M
 
-If you want, you can resize the root filesystem to take some or all mmc
-device.  To do that, use fdisk to make the second partition bigger, and
-use resize2fs to resize the filesystem.  Somethingg like:
+If you want, you can resize the root filesystem to take some or all of the mmc
+device.  To do that, use fdisk to make the second partition bigger, and use
+resize2fs to resize the filesystem.  Make sure that the start sector does not
+change, and don't make it smaller.  Something like:
 
   $ sudo fdisk /dev/mmcblk0
   Welcome to fdisk (util-linux 2.31.1).
@@ -266,5 +267,4 @@ The dom0 kernel gets 256M by default.  You can change this with
 
 in your local.conf
 
-Reboot doesn't seem to work.  It doesn't appear to be implemented in
-Xen for the Pi.
+Reboot should be working now; changes were made in Xen to support this.
