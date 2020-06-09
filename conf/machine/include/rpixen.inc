@@ -10,7 +10,7 @@ RPI_USE_U_BOOT = "1"
 ENABLE_UART = "1"
 
 # Make sure the Xen tools and xen are on the dom0 target
-MACHINE_ESSENTIAL_EXTRA_RRECOMMENDS = "packagegroup-xen-dom0"
+MACHINE_ESSENTIAL_EXTRA_RRECOMMENDS += "packagegroup-xen-dom0"
 
 # We use this to only do certain things when we are using a Xen machine.
 MACHINEOVERRIDES .= ":rpixen"
