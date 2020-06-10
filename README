@@ -27,7 +27,8 @@ Table of Contents
 =================
 
   I. Adding the meta-raspberry-pi-xen layer to your build
- II. Misc
+ II. Using the Montavista 5.4 kernel
+III. Misc
 
 
 I. Adding the meta-raspberry-pi-xen layer to your build
@@ -42,7 +43,7 @@ Then get this layer via git and add it to bblayers
 
   git clone https://github.com/MontaVista-OpenSourceTechnology/meta-raspberrypi-xen.git ../layers/meta-raspberrypi-xen
   (cd $TOPDIR/layers/meta-raspberrypi-xen; git checkout dunfell)
-  bitbake-layers add-layer $TOPDIR/layers/meta-raspberrypi-xen`
+  bitbake-layers add-layer $TOPDIR/layers/meta-raspberrypi-xen
 
 Add the following to your local.conf:
 
@@ -245,10 +246,22 @@ to destroy it because you can't do that, you can do:
 
   xl destroy dom1.home.net
 
-II. Misc
-========
+II. Using the MontaVista 5.4 kernel
+===================================
 
-You cannot use the Raspberry Pi kernel image in DomU.
+By default this will use the Raspberry Pi 4.19 standard kernel.  If
+you want to use the MontaVista supported 5.4 kernel, you need to
+follow the instructions for the meta-montavista-raspberrypi layer at
+https://github.com/MontaVista-OpenSourceTechnology/meta-montavista-raspberrypi
+
+Make sure to add:
+PREFERRED_PROVIDER_virtual/kernel = "linux-mvista"
+to your local.conf, or you won't get the new kernel.
+
+III. Misc
+=========
+
+You cannot use the Raspberry Pi Xen kernel image in DomU.
 
 Only the serial console is currently supported.  So you must have a compatible
 serial interface.  I use the TTL-232R-RPi (you can search on Mouser, DigiKey,
